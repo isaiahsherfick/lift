@@ -1,6 +1,8 @@
 use std::fs::File;
 use std::io::BufReader;
 use std::io::Error;
+use std::io;
+use tui::{backend::CrosstermBackend, Terminal};
 use rodio::{Decoder, OutputStream, source::Source};
 use std::env;
 /// Search for a pattern in a file and display the lines that contain it.
@@ -14,7 +16,6 @@ fn main() {
     let (_stream, stream_handle) = OutputStream::try_default().unwrap();
     // Load a sound from a file, using a path relative to Cargo.toml
     let file = BufReader::new(File::open(path).unwrap());
-    println!("file: {:?}", file);
     // Decode that sound file into a source
     let source = Decoder::new(file).unwrap();
     // Play the sound directly on the device
@@ -23,5 +24,11 @@ fn main() {
     // The sound plays in a separate audio thread,
     // so we need to keep the main thread alive while it's playing.
     std::thread::sleep(std::time::Duration::from_secs(5));
+
     println!("Where do we start?");
+    let stdout = io::stdout();
+    let backend = CrosstermBackend::new(stdout);
+    let mut terminal = Terminal::new(backend)?;
+    let mut terminal = Terminal::new(backend)?;
+    Ok(())
 }
