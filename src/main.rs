@@ -6,6 +6,7 @@ use std::time::Duration;
 use tui::{backend::CrosstermBackend, Terminal};
 use rodio::{Decoder, OutputStream, source::Source};
 use std::env;
+use std::thread;
 use audiotags::{Tag, Picture, MimeType};
 /// Search for a pattern in a file and display the lines that contain it.
 
@@ -24,6 +25,13 @@ fn main() {
     // Decode that sound file into a source
     let source = Decoder::new(file).unwrap();
     let total_play_time = end_time - start_time;
+    let starter_clone = start_time.clone();
+    std::thread::spawn(move || {
+        for i in starter_clone..214748 {
+            println!("{}", i);
+            std::thread::sleep(Duration::from_secs(1));
+        }
+    });
     // Play the sound directly on the device
     let _ = stream_handle.play_raw(source.convert_samples().skip_duration(Duration::from_secs(start_time)).take_duration(Duration::from_secs(total_play_time)));
     
@@ -32,7 +40,6 @@ fn main() {
     std::thread::sleep(std::time::Duration::from_secs(total_play_time));
     println!("What a good start!");
     // given source, ask for times within length of song
-
 
     // let stdout = io::stdout();
     // let backend = CrosstermBackend::new(stdout);
