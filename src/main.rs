@@ -29,16 +29,16 @@ fn main() {
     std::thread::spawn(move || {
         for i in starter_clone..214748 {
             println!("{}", i);
-            std::thread::sleep(Duration::from_secs(1));
+            std::thread::sleep(Duration::from_millis((1000.0 / speed) as u64));
         }
     });
-    let selection = source.convert_samples::<f32>().skip_duration(Duration::from_secs(start_time)).take_duration(Duration::from_secs(total_play_time)).speed(speed);
+    let selection = source.convert_samples::<f32>().skip_duration(Duration::from_millis(start_time * 1000)).take_duration(Duration::from_millis(((total_play_time * 1000) as f32 * (1.0 / speed)) as u64 )).speed(speed);
     // Play the sound directly on the device
     let _ = stream_handle.play_raw(selection);
     
     // The sound plays in a separate audio thread,
     // so we need to keep the main thread alive while it's playing.
-    std::thread::sleep(std::time::Duration::from_secs(total_play_time));
+    std::thread::sleep(std::time::Duration::from_millis((total_play_time as f32 * 1000.0 / speed) as u64));
     println!("What a good start!");
     // given source, ask for times within length of song
 
