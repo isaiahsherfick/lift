@@ -1,13 +1,13 @@
+use audiotags::{MimeType, Picture, Tag};
+use rodio::{source::Source, Decoder, OutputStream};
+use std::env;
 use std::fs::File;
+use std::io;
 use std::io::BufReader;
 use std::io::Error;
-use std::io;
+use std::thread;
 use std::time::Duration;
 use tui::{backend::CrosstermBackend, Terminal};
-use rodio::{Decoder, OutputStream, source::Source};
-use std::env;
-use std::thread;
-use audiotags::{Tag, Picture, MimeType};
 /// Search for a pattern in a file and display the lines that contain it.
 
 fn main() {
@@ -32,13 +32,21 @@ fn main() {
             std::thread::sleep(Duration::from_millis((1000.0 / speed) as u64));
         }
     });
-    let selection = source.convert_samples::<f32>().skip_duration(Duration::from_millis(start_time * 1000)).take_duration(Duration::from_millis(((total_play_time * 1000) as f32 * (1.0 / speed)) as u64 )).speed(speed);
+    let selection = source
+        .convert_samples::<f32>()
+        .skip_duration(Duration::from_millis(start_time * 1000))
+        .take_duration(Duration::from_millis(
+            ((total_play_time * 1000) as f32 * (1.0 / speed)) as u64,
+        ))
+        .speed(speed);
     // Play the sound directly on the device
     let _ = stream_handle.play_raw(selection);
-    
+
     // The sound plays in a separate audio thread,
     // so we need to keep the main thread alive while it's playing.
-    std::thread::sleep(std::time::Duration::from_millis((total_play_time as f32 * 1000.0 / speed) as u64));
+    std::thread::sleep(std::time::Duration::from_millis(
+        (total_play_time as f32 * 1000.0 / speed) as u64,
+    ));
     println!("What a good start!");
     // given source, ask for times within length of song
 
