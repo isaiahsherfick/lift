@@ -15,8 +15,8 @@ fn main() {
     let path = args.get(1).unwrap();
     let start_time = args.get(2).unwrap().parse::<u64>().unwrap();
     let end_time = args.get(3).unwrap().parse::<u64>().unwrap();
-    let speed = args.get(3).unwrap().parse::<f32>().unwrap();
-    println!("path: {}", path);
+    let speed = args.get(4).unwrap().parse::<f32>().unwrap();
+    println!("speed: {}", speed);
     // once we have the path, we need to load the mp3 file
     // Get an output stream handle to the default physical sound device
     let (_stream, stream_handle) = OutputStream::try_default().unwrap();
@@ -32,8 +32,7 @@ fn main() {
             std::thread::sleep(Duration::from_secs(1));
         }
     });
-    let selection = source.convert_samples::<f32>().skip_duration(Duration::from_secs(start_time)).take_duration(Duration::from_secs(total_play_time));
-    let select_sine = selection.clone().speed(speed);
+    let selection = source.convert_samples::<f32>().skip_duration(Duration::from_secs(start_time)).take_duration(Duration::from_secs(total_play_time)).speed(speed);
     // Play the sound directly on the device
     let _ = stream_handle.play_raw(selection);
     
