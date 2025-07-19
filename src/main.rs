@@ -1,11 +1,12 @@
 use eframe::egui;
 use eframe::egui::{FontFamily::*, FontId, TextStyle};
-use std::{collections::BTreeMap, fs::File};
+use rodio::{Sink, source::Source, OutputStream};
+use std::{collections::BTreeMap, fs::File, io::BufReader, path::PathBuf};
 
 fn main() -> eframe::Result {
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_inner_size([1000.0, 240.0]) // wide enough for the drag-drop overlay text
+            .with_inner_size([1000.0, 240.0])
             .with_drag_and_drop(true),
         ..Default::default()
     };
@@ -30,9 +31,11 @@ impl Default for Mode {
 #[derive(Default)]
 struct MyEguiApp {
     mode: Mode,
-    audio_file: Option<File>,
+    path_to_audio_file: Option<PathBuf>,
     file_name: Option<String>,
     playing: bool,
+    sink: Option<Sink>,
+    stream_handle: Option<OutputStream>,
 }
 
 impl MyEguiApp {
@@ -49,9 +52,11 @@ impl MyEguiApp {
             .all_styles_mut(move |style| style.text_styles = text_styles.clone());
         MyEguiApp {
             mode: Mode::FileSelectionMode,
-            audio_file: None,
+            path_to_audio_file: None,
             file_name: None,
             playing: false,
+            sink: None,
+            stream_handle: None,
         }
     }
 }
@@ -68,7 +73,7 @@ impl eframe::App for MyEguiApp {
                             if let Some(path) = rfd::FileDialog::new().pick_file() {
                                 match File::open(&path) {
                                     Ok(f) => {
-                                        self.audio_file = Some(f);
+                                        self.path_to_audio_file = Some(path.clone());
                                         self.file_name = Some(String::from(
                                             path.file_name().unwrap().to_str().unwrap(),
                                         ));
@@ -91,7 +96,7 @@ impl eframe::App for MyEguiApp {
                         let path = &i.raw.dropped_files[0].path.clone().unwrap();
                         match File::open(&path) {
                             Ok(f) => {
-                                self.audio_file = Some(f);
+                                self.path_to_audio_file = Some(path.clone());
                                 self.file_name =
                                     Some(String::from(path.file_name().unwrap().to_str().unwrap()));
                                 self.mode = Mode::TranscribeMode;
@@ -104,6 +109,20 @@ impl eframe::App for MyEguiApp {
                 });
             }
             Mode::TranscribeMode => {
+                if self.playing {
+                    // Get an output stream handle to the default physical sound device.
+                    // Note that the playback stops when the stream_handle is dropped.
+                    if self.stream_handle.is_none() {
+                        self.stream_handle = Some(rodio::OutputStreamBuilder::open_default_stream()
+                            .expect("open default audio stream"));
+                    }
+
+                    let file = File::open(self.path_to_audio_file.as_mut().unwrap()).unwrap();
+
+                    if self.sink.is_none() {
+                        self.sink = Some(rodio::play(&self.stream_handle.as_mut().unwrap().mixer(), file).unwrap())
+                    }
+                }
                 egui::CentralPanel::default().show(ctx, |ui| {
                     ui.vertical_centered(|ui| {
                         ui.add_space(10.0);
