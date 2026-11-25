@@ -1,13 +1,18 @@
 use eframe::egui;
 use eframe::egui::{FontFamily::*, FontId, TextStyle};
 use rodio::{Sink, source::Source, OutputStream};
-use std::{collections::BTreeMap, fs::File, io::BufReader, path::PathBuf};
+use std::{collections::BTreeMap, fs::File, io::BufReader, path::PathBuf, io::Read};
 
 fn main() -> eframe::Result {
+    let mut icon_file = File::open("./resources/music-double-note-plus.png").unwrap();
+    let mut icon_file_bytes: Vec<u8> = vec![];
+    let _ = icon_file.read_to_end(&mut icon_file_bytes).unwrap();
+    let icon_data = eframe::icon_data::from_png_bytes(&icon_file_bytes).unwrap();
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([1000.0, 240.0])
-            .with_drag_and_drop(true),
+            .with_drag_and_drop(true)
+            .with_icon(icon_data),
         ..Default::default()
     };
     eframe::run_native(
@@ -122,6 +127,10 @@ impl eframe::App for MyEguiApp {
                     if self.sink.is_none() {
                         self.sink = Some(rodio::play(&self.stream_handle.as_mut().unwrap().mixer(), file).unwrap())
                     }
+                }
+                else {
+                    self.stream_handle = None;
+                    self.sink = None;
                 }
                 egui::CentralPanel::default().show(ctx, |ui| {
                     ui.vertical_centered(|ui| {
